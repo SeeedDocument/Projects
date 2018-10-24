@@ -68,16 +68,16 @@ static void vFadingLEDsTask(void * pvArg) {
 }
 
 void vScanPIRTask(void * pvArg) {
-  for (;;) {
-    if (digitalRead(PIR_PIN)) {
-      xSemaphoreGive(xPIRBinarySemaphore);
-      
-      vTaskDelay(10000 / portTICK_PERIOD_MS);
-      continue;  
-    }
+	for (;;) {
+		if (digitalRead(PIR_PIN)) {
+			xSemaphoreGive(xPIRBinarySemaphore);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-  }
+			vTaskDelay(10000 / portTICK_PERIOD_MS);
+			continue;
+		}
+
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
+	}
 }
 
 static void vHandlePIRTask(void * pvArg) {
@@ -106,7 +106,7 @@ void setup() {
 	servo.attach(9);
 
 	vSemaphoreCreateBinary(xPIRBinarySemaphore);
-  xSemaphoreTake(xPIRBinarySemaphore, 0);
+	xSemaphoreTake(xPIRBinarySemaphore, 0);
 
 	s1 = xTaskCreate(vFadingLEDsTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 	s2 = xTaskCreate(vScanPIRTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
