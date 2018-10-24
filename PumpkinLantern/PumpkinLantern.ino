@@ -42,7 +42,7 @@ MP3                     mp3(2, 3);
 Adafruit_NeoPixel       pixels = Adafruit_NeoPixel(PIXEL_NUMBER, 5, NEO_GRB + NEO_KHZ800);
 Adafruit_TiCoServo      servo;
 
-SemaphoreHandle_t				xPIRBinarySemaphore;
+SemaphoreHandle_t       xPIRBinarySemaphore;
 
 void showPixels(uint8_t brightness) {
 	pixels.setBrightness(brightness);
