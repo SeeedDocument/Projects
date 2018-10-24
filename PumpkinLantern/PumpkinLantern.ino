@@ -1,35 +1,48 @@
+#include "Adafruit_NeoPixel.h"
+#include "Adafruit_TiCoServo.h"
 #include "FreeRTOS_AVR.h"
 #include "MP3.h"
-#include "Servo.h"
 
-Servo servo;
-MP3 mp3(2, 3);
-uint8_t pir = 4;
-uint8_t led = 5;
+#define PIR_PIN         4
+#define PIXEL_NUMBER    64
+#define MAX_BRIGHTNESS  127
+
+MP3                     mp3(2, 3);
+Adafruit_NeoPixel       pixels = Adafruit_NeoPixel(PIXEL_NUMBER, 5, NEO_GRB + NEO_KHZ800);
+Adafruit_TiCoServo      servo;
 
 SemaphoreHandle_t xPIRBinarySemaphore;
 
-static void vFadingLEDsTask(void * pvArg) {
-  for (;;) {
-    for(int fadeValue = 0; fadeValue <= 255; fadeValue += 5) {
-      analogWrite(led, fadeValue);
-      vTaskDelay(30 / portTICK_PERIOD_MS);
-    }
-  
-    for(int fadeValue = 255; fadeValue >= 0; fadeValue -= 5) {
-      analogWrite(led, fadeValue);
-      vTaskDelay(30 / portTICK_PERIOD_MS);
-    }
-  }
+void showPixels(uint8_t brightness) {
+	pixels.setBrightness(brightness);
+	for (int pixel = 0; pixel < PIXEL_NUMBER; pixel++) {
+		pixels.setPixelColor(pixel, pixels.Color(255, 0, 0));
+	}
+
+	pixels.show();
 }
 
-static void vScaningPIRTask(void * pvArg) {
+static void vFadingLEDsTask(void * pvArg) {
+	for (;;) {
+		for (int fadeValue = 0; fadeValue <= 127; fadeValue += 5) {
+			showPixels(fadeValue);
+			vTaskDelay(30 / portTICK_PERIOD_MS);
+		}
+
+		for (int fadeValue = 127; fadeValue >= 0; fadeValue -= 5) {
+			showPixels(fadeValue);
+			vTaskDelay(30 / portTICK_PERIOD_MS);
+		}
+	}
+}
+
+void vScanPIRTask(void * pvArg) {
   for (;;) {
-    if (digitalRead(pir)) {
+    if (digitalRead(PIR_PIN)) {
       xSemaphoreGive(xPIRBinarySemaphore);
       
       vTaskDelay(10000 / portTICK_PERIOD_MS);
-      continue;
+      continue;  
     }
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -37,48 +50,41 @@ static void vScaningPIRTask(void * pvArg) {
 }
 
 static void vHandlePIRTask(void * pvArg) {
-  for (;;) {
-    xSemaphoreTake(xPIRBinarySemaphore, portMAX_DELAY);
-    
-    mp3.playMP3Folder(1);
+	for (;;) {
+		xSemaphoreTake(xPIRBinarySemaphore, portMAX_DELAY);
 
-    for (uint8_t i = 0; i < 3; i++) {
-      analogWrite(led, 255);
-      servo.write(40);
-      delay(500);
+		mp3.playMP3Folder(1);
 
-      analogWrite(led, 0);
-      servo.write(0);
-      delay(500);
-    }
-  }
+		for (auto i = 0; i < 3; i++) {
+			showPixels(0);
+			servo.write(40);
+			delay(500);
+
+			showPixels(127);
+			servo.write(0);
+			delay(500);
+		}
+	}
 }
 
 void setup() {
-  portBASE_TYPE s1, s2, s3;
-  
-  Serial.begin(9600);
-  while (!Serial);
+	portBASE_TYPE s1, s2, s3;
 
-  mp3.init();
- servo.attach(6);
-  
-  vSemaphoreCreateBinary(xPIRBinarySemaphore);
+	mp3.init();
+	pixels.begin();
+	servo.attach(9);
 
-  s1 = xTaskCreate(vFadingLEDsTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-  s2 = xTaskCreate(vScaningPIRTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-  s3 = xTaskCreate(vHandlePIRTask, NULL, configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+	vSemaphoreCreateBinary(xPIRBinarySemaphore);
+  xSemaphoreTake(xPIRBinarySemaphore, 0);
 
-  if (xPIRBinarySemaphore == NULL || s1 != pdPASS || s2 != pdPASS || s3 != pdPASS) {
-    Serial.println("Creation problem");
-    for (;;);
-  }
+	s1 = xTaskCreate(vFadingLEDsTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	s2 = xTaskCreate(vScanPIRTask, NULL, configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	s3 = xTaskCreate(vHandlePIRTask, NULL, configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+	if (xPIRBinarySemaphore == NULL || s1 != pdPASS || s2 != pdPASS || s3 != pdPASS) {
+		for (;;);
+	}
 
-  vTaskStartScheduler();
-
-  Serial.println("Insufficient RAM");
-  for (;;);
+	vTaskStartScheduler();
 }
 
 void loop() { }
-
