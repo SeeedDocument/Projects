@@ -27,13 +27,13 @@ Halloween is coming, pumpkin lanterns are essential. We use Seeeduino and PIR Mo
 
 **Step 2: **Cut a box like this, and fix it to the mouth of pumpkin.
 
-![p1](\images\p1.jpg)
+![p1](./images/p1.jpg)
 
 **Setp 3: **Mount a arm to the servo motor. To fix a servo motor inside the pumpkin, we use a can as a holder. 
 
 **Step 4: **Make sure when the servo motor arm turns up, candies in the box will be spit out from the pumpkin's mouth. 
 
-![p2](\images\p2.jpg)
+![p2](./images/p2.jpg)
 
 *TIPS: If we put something heavy in the back of the box, the effect will be better.*
 
@@ -47,7 +47,7 @@ Halloween is coming, pumpkin lanterns are essential. We use Seeeduino and PIR Mo
 
 **Step 4: **plug Base Shield to Seeeduino.
 
-![p3](\images\p3.jpg)
+![p3](./images/p3.jpg)
 
 **Step 5: **To download the program to Seeeduino, we use an USB cable connection it to computer. After downloaded, we can only use a power cable inside pumpkin.
 
