@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<title>Seeed Dust Monitor</title>
+		<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.21.6.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.js"></script>
+	</head>
+	<body>
+		<canvas id="chart"></canvas>
+		<script>
+			var pubnub = new PubNub({
+				subscribeKey: "sub-c-e89b7416-f39f-11e8-a591-5ae93f5cd42c",
+				publishKey: "pub-c-259acd2d-a24e-4da6-886d-ba1964d3d8e4"
+			});
+			
+			var chartLabels = new Array();
+			var chartPM1Data = new Array();
+			var chartPM25Data = new Array();
+			var chartPM10Data = new Array();
+			
+			pubnub.addListener({
+				message: function(msg) {
+					console.log(msg.message);
+					
+					chartLabels.push(new Date().toLocaleString());
+					chartPM1Data.push(msg.message.pm1);
+					chartPM25Data.push(msg.message.pm25);
+					chartPM10Data.push(msg.message.pm10);
+					
+					var ctx = document.getElementById("chart").getContext('2d');
+					var chart = new Chart(ctx, {
+						type: 'line', 
+						data: {
+							labels: chartLabels,
+							datasets: [{
+								label: "PM1.0", 
+								data: chartPM1Data, 
+								borderColor: "#ff6384", 
+								fill: false
+							}, {
+								label: "PM2.5", 
+								data: chartPM25Data, 
+								borderColor: "#36a2eb", 
+								fill: false
+							}, {
+								label: "PM10", 
+								data: chartPM10Data, 
+								borderColor: "#cc65fe", 
+								fill: false
+							}]
+						}
+					});
+				}
+			});
+			
+			console.log("Subscribing..");
+			pubnub.subscribe({
+				channels: ['dust'] 
+			});
+		</script>
+	</body>
+</html>
